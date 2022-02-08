@@ -24,50 +24,76 @@ namespace InventorySystem
 
         public void AddItem(Item item)
         {
-            Item exists = itemList.Where(x => x.itemSO.name == item.itemSO.name).FirstOrDefault();
+            Item exists = itemList.Where(x => x.itemSO == item.itemSO).FirstOrDefault();
 
             if (exists != null)
+            {
                 exists.amount += item.amount;
+            }
             else
-                itemList.Add(item);
+            {
+                itemList.Add(new Item(item));
+            }
         }
-
-        public void RemoveItem(ItemSO itemSO, int amount = -1)
+        public void AddItem(Item item, int amount)
         {
-            Item containItem = itemList.Where(x => x.itemSO == itemSO).FirstOrDefault();
-            if (containItem == null)
-            {
-                Debug.LogError($"Trying to remove an item from an inventory that does not contain it. \nIventory = {this} \nItem = {itemSO}");
-                return;
-            }
+            Item exists = itemList.Where(x => x.itemSO == item.itemSO).FirstOrDefault();
 
-            if (amount == -1)
+            if (exists != null)
             {
-                itemList.Remove(containItem);
-                return;
+                exists.amount += amount;
             }
-
-            if (containItem.amount == amount)
+            else
             {
-                Debug.LogWarning($"Trying to remove item with amount {containItem.amount} by amount, but is not calling to remove the item completely");
-                itemList.Remove(containItem);
-                return;
+                itemList.Add(new Item(item, amount));
             }
-
-            if (containItem.amount < amount)
-            {
-                Debug.LogError($"Trying to remove item with amount {containItem.amount} by amount {amount} which is greater");
-                return;
-            }
-
-            containItem.amount -= amount;
         }
-    }
 
-    [System.Serializable] 
-    public class Item
-    {
-        public ItemSO itemSO;
-        public int amount;
+        public void RemoveItem(Item item, int amount = -1)
+        {
+            if (itemList.Contains(item) == false)
+            {
+                Debug.LogError($"Trying to remove an item from an inventory that does not contain it. \nIventory = {this} \nItem = {item}");
+                return;
+            }
+
+            if ((amount == -1) || (item.amount == amount))
+            {
+                itemList.Remove(item);
+                return;
+            }
+
+            if (item.amount < amount)
+            {
+                Debug.LogError($"Trying to remove item with amount {item.amount} by amount {amount} which is greater");
+                return;
+            }
+
+            item.amount -= amount;
+        }
+
+        public void ReplaceItem(Item oldItem, Item newItem)
+        {
+            if (itemList.Contains(oldItem) == false)
+            {
+                Debug.LogError($"Trying to replace item that does not exist in this inventory. \nOld Item{oldItem.itemSO.name} \nNew Item {newItem.itemSO.name}");
+                return;
+            }
+
+            int oldIndex = itemList.IndexOf(oldItem);
+            itemList.Insert(oldIndex, newItem);
+
+            RemoveItem(oldItem);
+        }
+
+        public void DebugList()
+        {
+            string listString = "";
+            foreach (Item item in itemList)
+            {
+                listString += $"{item.itemSO.name} ({item.amount})\n";
+            }
+            Debug.Log(listString);
+        }
     }
 }
